@@ -8,13 +8,21 @@ class EasyRider:
     def __init__(self):
         self.data_key = [
             'bus_id',
+            'stop_id',
             'stop_name',
+            'next_stop',
             'stop_type',
             'a_time'
         ]
         self.data_obj = dict.fromkeys(self.data_key, 0)
         self.count_bus_id = []
         self.bus_count = []
+        self.data_all = []
+        self.start_stops = set()
+        self.finish_stops = set()
+        self.transfer_stops = set()
+        self.bus_lines_dict = collections.defaultdict(list)
+        self.stops = set()
 
     def input_save_json(self):
         name_data = input()
@@ -70,6 +78,48 @@ class EasyRider:
             [(item, count) for item, count in collections.Counter(self.count_bus_id).items() if count > 1]
         )
 
+    def list_sorted(self):
+        self.input_save_json()
+
+        try:
+            with open('data.json', 'r') as f:
+                data_load = json.loads(json.load(f))
+                self.data_all = sorted(data_load, key=lambda x: x['stop_name'])
+        except FileNotFoundError:
+            print('Not file found!')
+
+    def bus_stops_list(self):
+        for b in self.data_all:
+            self.bus_lines_dict[b['bus_id']].append(b['stop_type'])
+            if b['stop_type'] == 'S':
+                self.start_stops.add(b['stop_name'])
+            if b['stop_type'] == 'F':
+                self.finish_stops.add(b['stop_name'])
+            if b['stop_name'] in self.stops:
+                self.transfer_stops.add(b['stop_name'])
+            self.stops.add(b['stop_name'])
+
+    def invalid_stops(self):
+        is_bool = True
+
+        for b in self.bus_lines_dict:
+            if ('S' not in self.bus_lines_dict[b] or 'F' not in self.bus_lines_dict[b]) and is_bool:
+                print(f'There is no start or end stop for the line: {b}')
+                is_bool = False
+
+        return is_bool
+
+    def special_stops(self):
+        self.list_sorted()
+        self.bus_stops_list()
+
+        invalid_stop = self.invalid_stops()
+
+        if invalid_stop:
+            print(f'Start stops: {len(self.start_stops)} {list(sorted(self.start_stops))}')
+            print(f'Transfer stops: {len(self.transfer_stops)} {list(sorted(self.transfer_stops))}')
+            print(f'Finish stops: {len(self.finish_stops)} {list(sorted(self.finish_stops))}')
+
     def start(self):
         self.bus_count_result()
 
@@ -79,7 +129,16 @@ class EasyRider:
             for k, v in bus:
                 print(f'bus_id: {k}, stops: {v}')
 
+    def checking_data_type(self):
+        self.show_field_json()
+
+        data_num = sum([int(v) for v in self.data_obj.values()])
+        print(f'Type and required field validation: {data_num} errors')
+
+        for k, v in self.data_obj.items():
+            print(f'{k}: {v}')
+
 
 if __name__ == '__main__':
     easy_rider = EasyRider()
-    easy_rider.start()
+    easy_rider.special_stops()
