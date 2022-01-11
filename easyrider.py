@@ -1,16 +1,20 @@
 # Write your awesome code here
 import json
 import re
+import collections
 
 
 class EasyRider:
     def __init__(self):
         self.data_key = [
+            'bus_id',
             'stop_name',
             'stop_type',
             'a_time'
         ]
         self.data_obj = dict.fromkeys(self.data_key, 0)
+        self.count_bus_id = []
+        self.bus_count = []
 
     def input_save_json(self):
         name_data = input()
@@ -47,14 +51,33 @@ class EasyRider:
         except FileNotFoundError:
             print('Not file found!')
 
+    def find_bus_id_list(self):
+        self.input_save_json()
+
+        try:
+            with open('data.json', 'r') as f:
+                data_load = json.loads(json.load(f))
+
+                for data in data_load:
+                    self.count_bus_id.append(data['bus_id'])
+        except FileNotFoundError:
+            print('Not file found!')
+
+    def bus_count_result(self):
+        self.find_bus_id_list()
+
+        self.bus_count.append(
+            [(item, count) for item, count in collections.Counter(self.count_bus_id).items() if count > 1]
+        )
+
     def start(self):
-        self.show_field_json()
+        self.bus_count_result()
 
-        data_num = sum([int(v) for v in self.data_obj.values()])
-        print(f'Type and required field validation: {data_num} errors')
+        print('Line names and number of stops:')
 
-        for k, v in self.data_obj.items():
-            print(f'{k}: {v}')
+        for bus in self.bus_count:
+            for k, v in bus:
+                print(f'bus_id: {k}, stops: {v}')
 
 
 if __name__ == '__main__':
