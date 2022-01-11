@@ -1,14 +1,12 @@
 # Write your awesome code here
 import json
+import re
 
 
 class EasyRider:
     def __init__(self):
         self.data_key = [
-            'bus_id',
-            'stop_id',
             'stop_name',
-            'next_stop',
             'stop_type',
             'a_time'
         ]
@@ -34,23 +32,17 @@ class EasyRider:
                 for data in data_load:
                     for v in data:
                         if v in self.data_key:
-                            if v in ['bus_id', 'stop_id']:
-                                if not isinstance(data[v], int):
-                                    self.data_obj[v] += 1
-                            if v in ['stop_name', 'next_stop', 'a_time']:
-                                if isinstance(data[v], str):
-                                    if len(data[v]) == 0:
-                                        self.data_obj[v] += 1
-                            if v in ['next_stop']:
-                                if isinstance(data[v], str):
-                                    self.data_obj[v] += 1
-                            if v in ['stop_type', 'a_time', 'stop_name']:
-                                if isinstance(data[v], (int, float)):
+                            if v in ['a_time']:
+                                if not bool(re.match(r'^([0-1][0-9]|2[0-3]):[0-5][0-9]$', data[v])):
                                     self.data_obj[v] += 1
                             if v in ['stop_type']:
                                 if isinstance(data[v], str):
-                                    if len(data[v]) == 2:
+                                    if not bool(re.match(r'^(S|F|O|^$)$', data[v])):
                                         self.data_obj[v] += 1
+                            if v in ['stop_name']:
+                                pattern = r'[A-Z]\w+\s?\w+?\s(Road|Avenue|Boulevard|Street)$'
+                                if not bool(re.match(pattern, data[v])):
+                                    self.data_obj[v] += 1
 
         except FileNotFoundError:
             print('Not file found!')
