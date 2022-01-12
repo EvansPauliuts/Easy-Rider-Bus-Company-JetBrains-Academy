@@ -25,6 +25,10 @@ class EasyRider:
         self.stops = set()
         self.times = dict()
         self.data_not_sorted = []
+        self.bus_stops_id_name = dict()
+        self.bus_stops_id_in = dict()
+        self.stop_types = dict()
+        self.count = 0
 
     def input_save_json(self):
         name_data = input()
@@ -174,9 +178,61 @@ class EasyRider:
         if not val:
             print('OK')
 
+    def bus_stops_id_and_name(self):
+        for b in self.data_not_sorted:
+            self.bus_stops_id_name[b['stop_id']] = [b['stop_name']]
+
+    def bus_stops_id(self):
+        for b in self.data_not_sorted:
+            try:
+                self.bus_stops_id_in[b['bus_id']].append(b['stop_id'])
+            except KeyError:
+                self.bus_stops_id_in[b['bus_id']] = [b['stop_id']]
+
+    def stops_types_data(self):
+        for b in self.data_not_sorted:
+            try:
+                self.stop_types[b['stop_type']].append(b['stop_id'])
+            except KeyError:
+                self.stop_types[b['stop_type']] = [b['stop_id']]
+
+    def bus_stops_types(self):
+        for k in self.bus_stops_id_name.keys():
+            self.count = 0
+            for line in self.bus_stops_id_in.values():
+                if k in line:
+                    self.count += 1
+
+            if self.count >= 2:
+                try:
+                    self.stop_types['T'].add(k)
+                except KeyError:
+                    self.stop_types['T'] = {k}
+
+    def run_demand(self):
+        print('On demand stops test:')
+        wrong = set()
+
+        try:
+            on_demand = self.stop_types['O']
+            for types, stops in self.stop_types.items():
+                if types != 'O':
+                    wrong |= set.intersection(set(on_demand), set(stops))
+        except KeyError:
+            pass
+
+        if wrong:
+            print(f'Wrong stop type: {sorted([self.bus_stops_id_name[v][0] for v in wrong])}')
+        else:
+            print('OK')
+
 
 if __name__ == '__main__':
     easy_rider = EasyRider()
     easy_rider.list_not_sorted()
-    # easy_rider.special_stops()
-    easy_rider.invalid_times()
+
+    easy_rider.bus_stops_id_and_name()
+    easy_rider.bus_stops_id()
+    easy_rider.stops_types_data()
+    easy_rider.bus_stops_types()
+    easy_rider.run_demand()
