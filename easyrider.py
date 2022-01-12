@@ -23,6 +23,8 @@ class EasyRider:
         self.transfer_stops = set()
         self.bus_lines_dict = collections.defaultdict(list)
         self.stops = set()
+        self.times = dict()
+        self.data_not_sorted = []
 
     def input_save_json(self):
         name_data = input()
@@ -88,6 +90,16 @@ class EasyRider:
         except FileNotFoundError:
             print('Not file found!')
 
+    def list_not_sorted(self):
+        self.input_save_json()
+
+        try:
+            with open('data.json', 'r') as f:
+                data_load = json.loads(json.load(f))
+                self.data_not_sorted = data_load
+        except FileNotFoundError:
+            print('Not file found!')
+
     def bus_stops_list(self):
         for b in self.data_all:
             self.bus_lines_dict[b['bus_id']].append(b['stop_type'])
@@ -138,7 +150,33 @@ class EasyRider:
         for k, v in self.data_obj.items():
             print(f'{k}: {v}')
 
+    def invalid_times(self):
+        val = False
+
+        for b in self.data_not_sorted:
+            try:
+                self.times[b['bus_id']].append(b)
+            except KeyError:
+                self.times[b['bus_id']] = [b]
+
+        print('Arrival time test:')
+
+        for b, d in self.times.items():
+            current_time = d[0]['a_time']
+            for stop in d[1:]:
+                next_time = stop['a_time']
+                if current_time >= next_time:
+                    print(f'bus_id line {b}: wrong time on station {stop["stop_name"]}')
+                    val = True
+                    break
+                current_time = next_time
+
+        if not val:
+            print('OK')
+
 
 if __name__ == '__main__':
     easy_rider = EasyRider()
-    easy_rider.special_stops()
+    easy_rider.list_not_sorted()
+    # easy_rider.special_stops()
+    easy_rider.invalid_times()
